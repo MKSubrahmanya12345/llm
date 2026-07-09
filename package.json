@@ -1,0 +1,11 @@
+{
+  "name": "velxio-generator-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"cd backend && bun run dev\" \"cd frontend && bun run dev\""
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

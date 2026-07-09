@@ -1,0 +1,10 @@
+# ??$$$ Root gitignore for the LLM Copilot workflow
+node_modules/
+dist/
+build/
+.env
+.env.local
+.env.*.local
+backend/latest_project.json
+.DS_Store
+Thumbs.db

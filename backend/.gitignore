@@ -1,0 +1,6 @@
+# ??$$$ Backend gitignore
+node_modules/
+.env
+.env.local
+latest_project.json
+.DS_Store
