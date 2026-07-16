@@ -8,8 +8,18 @@ import { validatePin } from '../validators';
 // ??$$$ Import getComponentMetadata along with validatePin
 import { validatePin, getComponentMetadata } from '../validators';
 
+/*
 const GROQ_MODEL_ID = 'llama-3.3-70b-versatile';
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+*/
+// ??$$$ Import Bedrock SDK and initialize client for Qwen
+import { BedrockRuntimeClient, ConverseCommand } from "@aws-sdk/client-bedrock-runtime";
+
+const bedrockClient = new BedrockRuntimeClient({
+  region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'eu-north-1'
+});
+
+const BEDROCK_MODEL_ID = process.env.BEDROCK_MODEL_ID || 'qwen.qwen3-coder-30b-a3b-v1:0';
 
 /*
 export async function generateVelxioProject(
@@ -345,43 +355,78 @@ try {
 //   }
 // }
 
-// ??$$$ Helper function for call to Groq API
-async function callGroq(systemPrompt: string, userPrompt: string): Promise<string> {
-  const apiKey = process.env.GROQ_API_KEY || '';
-  if (!apiKey) {
-    throw new Error('GROQ_API_KEY environment variable is not defined.');
-  }
+// // ??$$$ Helper function for call to Groq API
+// async function callGroq(systemPrompt: string, userPrompt: string): Promise<string> {
+//   const apiKey = process.env.GROQ_API_KEY || '';
+//   if (!apiKey) {
+//     throw new Error('GROQ_API_KEY environment variable is not defined.');
+//   }
+// 
+//   const response = await fetch(GROQ_API_URL, {
+//     method: 'POST',
+//     headers: {
+//       'Authorization': `Bearer ${apiKey}`,
+//       'Content-Type': 'application/json',
+//     },
+//     body: JSON.stringify({
+//       model: GROQ_MODEL_ID,
+//       messages: [
+//         { role: 'system', content: systemPrompt },
+//         { role: 'user', content: userPrompt },
+//       ],
+//       temperature: 0.1,
+//       max_tokens: 4000,
+//     }),
+//   });
+// 
+//   if (!response.ok) {
+//     const errorText = await response.text();
+//     throw new Error(`Groq API returned error: ${response.status} ${response.statusText} - ${errorText}`);
+//   }
+// 
+//   const json = await response.json();
+//   let content = json.choices[0].message.content.trim();
+// 
+//   if (content.startsWith('```')) {
+//     content = content.replace(/^```[a-zA-Z0-9\+\-\_]*\s*/i, '').replace(/```\s*$/, '').trim();
+//   }
+// 
+//   return content;
+// }
 
-  const response = await fetch(GROQ_API_URL, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: GROQ_MODEL_ID,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
+// ??$$$ Helper function for calling AWS Bedrock using Qwen Coder
+async function callBedrock(systemPrompt: string, userPrompt: string): Promise<string> {
+  const input = {
+    modelId: BEDROCK_MODEL_ID,
+    system: [{ text: systemPrompt }],
+    messages: [
+      {
+        role: "user" as const,
+        content: [{ text: userPrompt }],
+      },
+    ],
+    inferenceConfig: {
       temperature: 0.1,
-      max_tokens: 4000,
-    }),
-  });
+      maxTokens: 4000,
+    },
+  };
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Groq API returned error: ${response.status} ${response.statusText} - ${errorText}`);
+  try {
+    const command = new ConverseCommand(input);
+    const response = await bedrockClient.send(command);
+    
+    const content = response.output?.message?.content?.[0]?.text || '';
+    let trimmedContent = content.trim();
+
+    if (trimmedContent.startsWith('```')) {
+      trimmedContent = trimmedContent.replace(/^```[a-zA-Z0-9\+\-\_]*\s*/i, '').replace(/```\s*$/, '').trim();
+    }
+
+    return trimmedContent;
+  } catch (err: any) {
+    console.error("Error invoking Bedrock:", err);
+    throw new Error(`Bedrock API returned error: ${err?.message || err}`);
   }
-
-  const json = await response.json();
-  let content = json.choices[0].message.content.trim();
-
-  if (content.startsWith('```')) {
-    content = content.replace(/^```[a-zA-Z0-9\+\-\_]*\s*/i, '').replace(/```\s*$/, '').trim();
-  }
-
-  return content;
 }
 
 // ??$$$ Step 1 Helper: Generate Components
@@ -435,7 +480,11 @@ Example Output format:
     ? `${prompt}\n\n## Feedback from linter:\n${feedback}\n\nPlease correct the component array.`
     : prompt;
 
+  /*
   const content = await callGroq(systemPrompt, userPrompt);
+  */
+  // ??$$$ Invoke Qwen on Bedrock instead of Groq
+  const content = await callBedrock(systemPrompt, userPrompt);
   const parsed = JSON.parse(content);
   if (!Array.isArray(parsed)) {
     throw new Error('LLM response is not a JSON array.');
@@ -502,7 +551,11 @@ Example Output format:
     ? `For project request "${prompt}", with components: ${JSON.stringify(components, null, 2)}\n\n## Feedback from linter:\n${feedback}\n\nPlease correct the wiring connections array.`
     : `For project request "${prompt}", generate the connections array.`;
 
+  /*
   const content = await callGroq(systemPrompt, userPrompt);
+  */
+  // ??$$$ Invoke Qwen on Bedrock instead of Groq
+  const content = await callBedrock(systemPrompt, userPrompt);
   const parsed = JSON.parse(content);
   if (!Array.isArray(parsed)) {
     throw new Error('LLM response is not a JSON array.');
@@ -516,6 +569,8 @@ async function generateFirmware(
   components: ComponentInstance[],
   connections: ConnectionSchema[]
 ): Promise<string> {
+  // ??$$$ Modified system prompt to enforce millis() over delay() and restrict to approved libraries
+  /*
   const systemPrompt = `
 You are a firmware generator for Velxio hardware projects.
 Given a list of components and their wiring connections, write a valid Arduino C++ sketch to control the components as requested.
@@ -536,10 +591,51 @@ Rules:
 Output format:
 You MUST output ONLY the raw C++ code. Do not wrap in markdown code blocks like \`\`\`cpp. Output nothing else.
   `;
+  */
+  // ??$$$ Newer systemPrompt using millis() instead of delay(), and approved libraries list
+  const systemPrompt = `
+You are a firmware generator for Velxio hardware projects.
+Given a list of components and their wiring connections, write a valid Arduino C++ sketch to control the components as requested.
+
+Components:
+${JSON.stringify(components, null, 2)}
+
+Connections:
+${JSON.stringify(connections, null, 2)}
+
+Rules:
+1. Ensure you use the exact same pin numbers and connections defined in the connections array.
+   * Check which pins connect to which peripherals (e.g., if potentiometer SIG is connected to A0, use A0; if servo PWM is connected to pin 3, use pin 3).
+2. Write clean, complete, compilation-ready C++ code.
+3. Make sure to include all necessary libraries. You MUST ONLY use libraries that exist in Velxio. The approved list of libraries and headers are:
+   - "DHT sensor library" (header <DHT.h>)
+   - "Adafruit SSD1306" (header <Adafruit_SSD1306.h>)
+   - "Adafruit GFX Library" (header <Adafruit_GFX.h>)
+   - "LiquidCrystal I2C" (header <LiquidCrystal_I2C.h>)
+   - "LiquidCrystal" (header <LiquidCrystal.h>)
+   - "Servo" (header <Servo.h> for Arduino boards)
+   - "ESP32Servo" (header <ESP32Servo.h> for ESP32 boards)
+   - "Adafruit MPU6050" (header <Adafruit_MPU6050.h>)
+   - "RTClib" (header <RTClib.h>)
+   - "Adafruit BMP280 Library" (header <Adafruit_BMP280.h>)
+   - "PubSubClient" (header <PubSubClient.h>)
+   - "Adafruit Unified Sensor" (header <Adafruit_Sensor.h>)
+   - "Adafruit BusIO" (header <Adafruit_I2CDevice.h> etc.)
+   Do not include or use any other exotic or proprietary libraries.
+4. Implement the loop() non-blocking and with logical behavior to fulfill the user's prompt. You MUST use millis() (non-blocking timer state machine) instead of delay() for all timing and waiting intervals. Absolutely avoid using delay() except for simple pushbutton debouncing state change updates (e.g. delay(50)).
+
+Output format:
+You MUST output ONLY the raw C++ code. Do not wrap in markdown code blocks like \`\`\`cpp. Output nothing else.
+  `;
+  // ??$$$
 
   const userPrompt = `For project request "${prompt}", generate the Arduino firmware code.`;
 
+  /*
   const content = await callGroq(systemPrompt, userPrompt);
+  */
+  // ??$$$ Invoke Qwen on Bedrock instead of Groq
+  const content = await callBedrock(systemPrompt, userPrompt);
   return content;
 }
 

@@ -101,7 +101,7 @@ function App() {
   };
 
   const openInSimulator = () => {
-    window.open('http://localhost:5173/editor?import_latest=true', '_blank');
+    window.open('http://localhost:5173/importing?import_latest=true', '_blank');
   };
 
   return (
