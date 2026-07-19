@@ -107,20 +107,19 @@ function App() {
     setSimulatorLoading(true);
     
     try {
-      // Fetch the project from our backend in Wokwi-compatible format
-      const res = await fetch('/api/project/latest/wokwi');
+      // Store the project in localStorage so Velxio can pick it up
+      const projectData = {
+        version: 1,
+        name: response.project?.projectMetadata?.name || 'Generated Project',
+        parts: response.project?.components || [],
+        wires: response.project?.connections || [],
+        code: response.project?.firmware?.code || '',
+      };
       
-      if (!res.ok) {
-        throw new Error('Failed to fetch project data');
-      }
+      localStorage.setItem('velxio_import_project', JSON.stringify(projectData));
       
-      const wokwiProject = await res.json();
-      
-      // Encode the project data as base64 for URL transfer
-      const projectData = btoa(unescape(encodeURIComponent(JSON.stringify(wokwiProject))));
-      
-      // Open Wokwi simulator with the project data
-      const simulatorUrl = `https://wokwi.com/arduino/new?code=${projectData}`;
+      // Open Velxio simulator with import_latest=true
+      const simulatorUrl = 'http://localhost:5173/importing?import_latest=true';
       window.open(simulatorUrl, '_blank');
     } catch (err: any) {
       console.error('Failed to launch simulator:', err);
@@ -146,12 +145,12 @@ function App() {
         </div>
         <div className="flex items-center gap-4 text-xs">
           <a
-            href="https://wokwi.com"
+            href="http://localhost:5173/editor"
             target="_blank"
             rel="noreferrer"
             className="hover:text-white text-[#9e9eb0] transition font-semibold"
           >
-            ← Back to Wokwi
+            ← Back to Velxio Editor
           </a>
         </div>
       </header>
