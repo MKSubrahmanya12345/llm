@@ -1,4 +1,4 @@
-// ??$$$ Types definition for Velxio Project Generator
+// Types definition for Velxio Project Generator
 
 export interface ComponentInstance {
   id: string;
@@ -14,6 +14,7 @@ export interface ConnectionSchema {
   color?: string;
 }
 
+
 export interface VelxioProject {
   projectMetadata: {
     name: string;
@@ -23,4 +24,5 @@ export interface VelxioProject {
   firmware: {
     code: string;
   };
+  libraries?: string[];
 }

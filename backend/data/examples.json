@@ -1,0 +1,18 @@
+[
+  { "id": "blink", "name": "Blink", "summary": "Blink the on-board LED on a digital pin.", "tags": ["blink", "led", "basic", "beginner", "arduino"] },
+  { "id": "fade", "name": "Fade", "summary": "PWM fade an LED using analogWrite.", "tags": ["fade", "pwm", "led", "basic"] },
+  { "id": "button-led", "name": "Button + LED", "summary": "Read a pushbutton, drive an LED.", "tags": ["button", "led", "input", "basic"] },
+  { "id": "potentiometer-led", "name": "Potentiometer + LED", "summary": "Read an analog potentiometer and drive an LED.", "tags": ["pot", "potentiometer", "analog", "led"] },
+  { "id": "servo-sweep", "name": "Servo Sweep", "summary": "Sweep a hobby servo on a PWM pin.", "tags": ["servo", "pwm", "motor", "actuator"] },
+  { "id": "buzzer-tone", "name": "Buzzer Tone", "summary": "Play tones on a piezo buzzer.", "tags": ["buzzer", "tone", "audio"] },
+  { "id": "dht22-temp", "name": "DHT22 Temperature", "summary": "Read temperature and humidity from a DHT22 over a single-wire data pin.", "tags": ["dht22", "temperature", "humidity", "sensor", "esp32", "onewire"] },
+  { "id": "hc-sr04-distance", "name": "HC-SR04 Distance", "summary": "Measure distance with an ultrasonic sensor using TRIG and ECHO.", "tags": ["hc-sr04", "ultrasonic", "distance", "sensor"] },
+  { "id": "mpu6050-accel", "name": "MPU6050 Accelerometer", "summary": "Read acceleration and gyro over I2C from an MPU6050 IMU.", "tags": ["mpu6050", "imu", "i2c", "sensor"] },
+  { "id": "ssd1306-oled", "name": "SSD1306 OLED", "summary": "Draw text and shapes on an SSD1306 OLED over I2C.", "tags": ["ssd1306", "oled", "display", "i2c"] },
+  { "id": "lcd1602-hello", "name": "LCD1602 Hello World", "summary": "Print a hello-world message on a 16x2 I2C LCD.", "tags": ["lcd1602", "lcd", "display", "i2c"] },
+  { "id": "ds1307-rtc", "name": "DS1307 RTC", "summary": "Read the time from a DS1307 real-time clock over I2C.", "tags": ["ds1307", "rtc", "i2c", "time"] },
+  { "id": "microsd-logger", "name": "microSD Card Logger", "summary": "Log sensor readings to a microSD card over SPI.", "tags": ["microsd", "sd", "spi", "storage", "logger"] },
+  { "id": "epaper-text", "name": "ePaper Text", "summary": "Render text on a small ePaper display over SPI.", "tags": ["epaper", "e-ink", "display", "spi"] },
+  { "id": "led-ring-pattern", "name": "NeoPixel Ring Pattern", "summary": "Run an animation on a WS2812 / NeoPixel LED ring.", "tags": ["neopixel", "led-ring", "ws2812", "rgb"] },
+  { "id": "hx711-scale", "name": "HX711 Load Cell", "summary": "Read weight from an HX711 load-cell amplifier.", "tags": ["hx711", "load-cell", "weight", "sensor"] }
+]
