@@ -192,7 +192,8 @@ export class PinAllocator {
     type: string,
     meta: { tagName?: string } | null,
   ): string[] {
-    if (Array.isArray((meta as any)?.pins)) return (meta as any).pins as string[];
+    const pins = (meta as any)?.pins;
+    if (Array.isArray(pins) && pins.length > 0) return pins as string[];
     const tag = (meta?.tagName ?? type).toLowerCase();
     if (tag.includes('servo')) return ['PWM', 'V+', 'GND'];
     if (tag.includes('rgb-led')) return ['R', 'G', 'B', 'COM'];

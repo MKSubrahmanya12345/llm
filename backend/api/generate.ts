@@ -47,6 +47,28 @@ export async function validateProject(
   return { valid: res.valid, errors };
 }
 
+// In-memory storage for the latest project (singleton pattern)
+let _latestProject: VelxioProject | null = null;
+let _latestPrompt: string = '';
+
+export function setLatestProject(project: VelxioProject, prompt: string = ''): void {
+  _latestProject = project;
+  _latestPrompt = prompt;
+  persist(project);
+}
+
+export function getLatestProject(): VelxioProject | null {
+  if (!_latestProject) {
+    _latestProject = loadPersisted();
+  }
+  return _latestProject;
+}
+
+export function getLatestPrompt(): string {
+  return _latestPrompt;
+}
+
+// Backward compatibility alias
 export let latestProject: VelxioProject | null = loadPersisted();
 
 function loadPersisted(): VelxioProject | null {

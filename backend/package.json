@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "bun --watch server.ts"
+    "dev": "bun --watch server.ts",
+    "test": "npx vitest run",
+    "typecheck": "npx tsc --noEmit"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1085.0",
@@ -13,9 +15,10 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "typescript": "^5.0.0",
-    "@types/express": "^5.0.6",
     "@types/cors": "^2.8.19",
-    "@types/node": "^26.1.1"
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.1.1",
+    "typescript": "^5.0.0",
+    "vitest": "^4.1.10"
   }
 }

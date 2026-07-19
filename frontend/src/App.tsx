@@ -1,6 +1,6 @@
 // ??$$$ Premium Velxio-matching IDE Interface for LLM Generator with Agent Live Logs
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 interface AgentLog {
   type: 'step' | 'info' | 'error' | 'success';
@@ -15,6 +15,7 @@ function App() {
   const [response, setResponse] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'code' | 'wiring' | 'validation' | 'agent'>('agent');
+  const [simulatorLoading, setSimulatorLoading] = useState(false);
 
   const suggestions = [
     {
@@ -100,9 +101,34 @@ function App() {
     }
   };
 
-  const openInSimulator = () => {
-    window.open('http://localhost:5173/importing?import_latest=true', '_blank');
-  };
+  const launchInSimulator = useCallback(async () => {
+    if (!response?.success) return;
+    
+    setSimulatorLoading(true);
+    
+    try {
+      // Fetch the project from our backend in Wokwi-compatible format
+      const res = await fetch('/api/project/latest/wokwi');
+      
+      if (!res.ok) {
+        throw new Error('Failed to fetch project data');
+      }
+      
+      const wokwiProject = await res.json();
+      
+      // Encode the project data as base64 for URL transfer
+      const projectData = btoa(unescape(encodeURIComponent(JSON.stringify(wokwiProject))));
+      
+      // Open Wokwi simulator with the project data
+      const simulatorUrl = `https://wokwi.com/arduino/new?code=${projectData}`;
+      window.open(simulatorUrl, '_blank');
+    } catch (err: any) {
+      console.error('Failed to launch simulator:', err);
+      setError('Failed to launch simulator. Please try again.');
+    } finally {
+      setSimulatorLoading(false);
+    }
+  }, [response]);
 
   return (
     <div className="min-h-screen bg-[#121214] text-[#e1e1e6] flex flex-col font-sans select-none">
@@ -120,12 +146,12 @@ function App() {
         </div>
         <div className="flex items-center gap-4 text-xs">
           <a
-            href="http://localhost:5173/editor"
+            href="https://wokwi.com"
             target="_blank"
             rel="noreferrer"
             className="hover:text-white text-[#9e9eb0] transition font-semibold"
           >
-            ← Back to Simulator
+            ← Back to Wokwi
           </a>
         </div>
       </header>
@@ -244,10 +270,23 @@ function App() {
 
             {response?.success && (
               <button
-                onClick={openInSimulator}
-                className="bg-[#007acc] hover:bg-[#0062a3] text-white text-xs font-bold py-1 px-3 rounded flex items-center gap-1.5 transition"
+                onClick={launchInSimulator}
+                disabled={simulatorLoading}
+                className="bg-[#007acc] hover:bg-[#0062a3] disabled:bg-[#2e303c] disabled:cursor-wait text-white text-xs font-bold py-1 px-3 rounded flex items-center gap-1.5 transition"
               >
-                <span>🚀</span> Launch Simulator
+                {simulatorLoading ? (
+                  <>
+                    <svg className="animate-spin h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <span>🚀</span> Launch Simulator
+                  </>
+                )}
               </button>
             )}
           </div>

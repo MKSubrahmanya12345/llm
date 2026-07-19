@@ -3,7 +3,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { generateVelxioProject, validateProject, latestProject } from './api/generate';
+import { generateVelxioProject, validateProject, latestProject, setLatestProject, getLatestProject, getLatestPrompt } from './api/generate';
 import { CatalogService } from './catalog/CatalogService';
 
 dotenv.config();
@@ -17,7 +17,7 @@ app.use(express.json());
 app.post('/api/generate', async (req, res) => {
   const { prompt } = req.body;
   if (!prompt) {
-    return res.tus(400).json({ error: 'Prompt is required' });
+    return res.status(400).json({ error: 'Prompt is required' });
   }
 
   // Set headers for streaming response
@@ -40,6 +40,9 @@ app.post('/api/generate', async (req, res) => {
 
     const validation = await validateProject(project);
 
+    // Store the project and prompt for later retrieval
+    setLatestProject(project, prompt);
+
     // Send final success event
     sendEvent({
       type: 'done',
@@ -59,10 +62,38 @@ app.post('/api/generate', async (req, res) => {
 });
 
 app.get('/api/project/latest', (req, res) => {
-  if (!latestProject) {
+  const project = getLatestProject();
+  if (!project) {
     return res.status(404).json({ error: 'No project has been generated yet.' });
   }
-  res.json(latestProject);
+  res.json(project);
+});
+
+app.get('/api/project/latest/wokwi', (req, res) => {
+  const project = getLatestProject();
+  if (!project) {
+    return res.status(404).json({ error: 'No project has been generated yet.' });
+  }
+
+  // Return in Wokwi-compatible format
+  res.json({
+    version: 1,
+    name: project.projectMetadata?.name || 'Generated Project',
+    prompt: getLatestPrompt(),
+    parts: project.components.map(c => ({
+      id: c.id,
+      type: c.type,
+      x: c.x,
+      y: c.y,
+      properties: c.properties || {},
+    })),
+    wires: project.connections.map(c => ({
+      from: c.from,
+      to: c.to,
+      color: c.color || '#4ade80',
+    })),
+    code: project.firmware?.code || '',
+  });
 });
 
 app.get('/api/health', (req, res) => {

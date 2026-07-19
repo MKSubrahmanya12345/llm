@@ -8,7 +8,7 @@
  * name, pinCount, etc.) replace or extend the metadata entry.
  */
 
-import type { ComponentMetadataEntry } from './types';
+import type { ComponentMetadataEntry, ComponentPin } from './types';
 
 export class CatalogNormalizer {
   normalize(
@@ -36,13 +36,18 @@ export class CatalogNormalizer {
   private fromMetadata(raw: Record<string, unknown>): ComponentMetadataEntry | null {
     const id = this.readString(raw, 'id');
     if (!id) return null;
+    const pinsRaw = raw['pins'];
+    const pins = Array.isArray(pinsRaw) ? pinsRaw.filter((p): p is ComponentPin =>
+      p != null && typeof p === 'object' && 'name' in p
+    ) : [];
     return {
       id,
       tagName: this.readString(raw, 'tagName'),
       name: this.readString(raw, 'name') ?? id,
       category: this.readString(raw, 'category') ?? 'uncategorized',
       description: this.readString(raw, 'description') ?? '',
-      pinCount: this.readNumber(raw, 'pinCount') ?? 0,
+      pinCount: this.readNumber(raw, 'pinCount') ?? pins.length,
+      pins,
       tags: this.readStringArray(raw, 'tags') ?? [],
       properties: this.readRecord(raw, 'properties') ?? {},
       defaultValues: this.readRecord(raw, 'defaultValues') ?? {},
@@ -63,6 +68,7 @@ export class CatalogNormalizer {
       category: 'uncategorized',
       description: '',
       pinCount: 0,
+      pins: [],
       tags: [],
       properties: {},
       defaultValues: {},

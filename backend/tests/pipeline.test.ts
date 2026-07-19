@@ -1,13 +1,14 @@
 // Unit tests for the refactored pipeline.
 //
-// Run with: cd E:\subbu\wokwi-youtube\llm\backend; bun test tests/
+// Run with: cd backend && npx vitest run
 //
 // These are smoke tests. They do not require AWS creds; every stage
 // uses a stub LlmClient that returns canned responses.
 
-import { describe, it, expect, beforeAll } from 'bun:test';
+import { describe, it, expect, beforeAll } from 'vitest';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 
 import { Planner } from '../planner/Planner';
 import { LlmClient, LlmChatOptions } from '../planner/LlmClient';
@@ -40,7 +41,9 @@ class ScriptedLlm implements LlmClient {
   }
 }
 
-const DATA_DIR = path.join(import.meta.dir, '..', 'data');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const DATA_DIR = path.join(__dirname, '..', 'data');
 
 beforeAll(() => {
   if (!fs.existsSync(path.join(DATA_DIR, 'components-metadata.json'))) {
