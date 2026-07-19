@@ -4,6 +4,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { generateVelxioProject, validateProject, latestProject } from './api/generate';
+import { CatalogService } from './catalog/CatalogService';
 
 dotenv.config();
 
@@ -16,7 +17,7 @@ app.use(express.json());
 app.post('/api/generate', async (req, res) => {
   const { prompt } = req.body;
   if (!prompt) {
-    return res.status(400).json({ error: 'Prompt is required' });
+    return res.tus(400).json({ error: 'Prompt is required' });
   }
 
   // Set headers for streaming response
@@ -70,6 +71,15 @@ app.get('/api/health', (req, res) => {
 
 
 //skip
-app.listen(PORT, () => {
-  console.log(`Backend API running on http://localhost:${PORT}`);
+async function startServer() {
+  await CatalogService.init();
+
+  app.listen(PORT, () => {
+    console.log(`Backend API running on http://localhost:${PORT}`);
+  });
+}
+
+startServer().catch((error) => {
+  console.error('Failed to start server:', error);
+  process.exit(1);
 });

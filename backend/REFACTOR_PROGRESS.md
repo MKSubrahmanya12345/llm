@@ -116,7 +116,7 @@ Concrete steps for Phase 4:
 
 Then move to Phase 5 (the pipeline rewrite).
 
-## Phase 4 — Planner — COMPLETE 2026-07-20
+## Phase 4   Planner   COMPLETE 2026-07-20
 
 - Created planner/types.ts with ProjectPlan, PlannedComponent, LibraryHint, BoardId, ProtocolId.
 - Created planner/LlmClient.ts with LlmClient interface + BedrockLlmClient implementation. Centralises the Bedrock SDK so every pipeline stage calls the same wrapper (and tests can stub it).
@@ -124,7 +124,7 @@ Then move to Phase 5 (the pipeline rewrite).
   - Planner.plan(prompt) builds LLMContext, calls uildPlanPrompt, talks to the LLM, parses the JSON response (with first-\{...}\ fallback), then normalises board id (alias-aware), protocols, libraries, components.
   - Board defaults fall back to context.board.id so the rest of the pipeline can rely on a real BoardId.
 - Created planner/index.ts barrel.
-- Created llocator/types.ts stub (Phase 8 fills the implementation). The new prompt modules already import PinAllocation from here, so defining the shape now lets tsc pass.
+- Created  llocator/types.ts stub (Phase 8 fills the implementation). The new prompt modules already import PinAllocation from here, so defining the shape now lets tsc pass.
 
 ### Files Created
 - backend/planner/types.ts
@@ -138,13 +138,15 @@ Then move to Phase 5 (the pipeline rewrite).
 
 ### Architecture Decisions
 - LlmClient is a separate module so each stage can be unit-tested with a fake without touching the SDK.
-- Planner only decides architecture (board, protocols, libraries, component list). It does NOT pick pins or write firmware — those remain later stages.
+- Planner only decides architecture (board, protocols, libraries, component list). It does NOT pick pins or write firmware   those remain later stages.
 - Board id coercion includes common aliases (uno/nano/mega/esp32/pico) so a chatty model that says "uno" still produces a valid ProjectPlan.
 - Component ids are auto-slugified from the LLM output so even if the model emits "LED_status", the pipeline keeps a stable kebab-case id.
 - Prompt preamble + plan-stage prompt live in prompts/plan.prompt.ts; Planner just glues context ? prompt ? LLM ? typed result.
 
 ### Remaining Tasks
-- Phase 5: rewrite pi/generate.ts to Planner ? Components ? Connections ? Libraries ? Firmware ? Validation. Migrate componentCatalog / getComponentMetadata / alidatePin references to CatalogService / alidators-core.
+- Phase 5: rewrite  pi/generate.ts to Planner ? Components ? Connections ? Libraries ? Firmware ? Validation. Migrate componentCatalog / getComponentMetadata / 
+alidatePin references to CatalogService / 
+alidators-core.
 - Phase 6: one-retry cap (replace while (attempts <= 99) with single repair pass).
 - Phase 7: LibraryResolver (move "if servo/oled/lcd" out of generate.ts).
 - Phase 8: PinAllocator implementation (types already exist).
@@ -153,17 +155,18 @@ Then move to Phase 5 (the pipeline rewrite).
 - Phase 11: keep this document up to date.
 
 ### Current Blockers
-- pi/generate.ts has ~30 	sc errors (duplicate generateVelxioProject, missing ttemptGenerate, legacy componentCatalog / getComponentMetadata / alidatePin references). These are Phase 5's migration target; not a blocker for the refactor but they will mask new errors until generate.ts is rewritten.
+-  pi/generate.ts has ~30 	sc errors (duplicate generateVelxioProject, missing  ttemptGenerate, legacy componentCatalog / getComponentMetadata / 
+alidatePin references). These are Phase 5's migration target; not a blocker for the refactor but they will mask new errors until generate.ts is rewritten.
 
 ### Notes For Next Session
-- Phase 4 done. Run cd E:\subbu\wokwi-youtube\llm\backend; bunx tsc --noEmit — only pi/generate.ts errors remain.
+- Phase 4 done. Run cd E:\subbu\wokwi-youtube\llm\backend; bunx tsc --noEmit   only  pi/generate.ts errors remain.
 - planner/Planner.plan(prompt) is the single entry point. It needs an LlmClient to actually run; default is BedrockLlmClient which requires AWS creds in env.
-- llocator/types.ts is intentionally minimal — Phase 8 must implement PinAllocator.ts that consumes ProjectPlan and produces AllocationResult.
+-  llocator/types.ts is intentionally minimal   Phase 8 must implement PinAllocator.ts that consumes ProjectPlan and produces AllocationResult.
 - Phase 5 should construct each stage in a pipeline/Pipeline.ts factory and replace the body of generateVelxioProject with a single call.
 
-## Phases 5–9 — Pipeline rewrite — COMPLETE 2026-07-20
+## Phases 5 9   Pipeline rewrite   COMPLETE 2026-07-20
 
-The new pipeline replaces the entire pi/generate.ts body. The 51 KB monolithic file with its 99-attempt retry loop, 6 different commented-out system prompt versions, and hand-rolled board-id standardization has been deleted. The replacement is roughly 2 KB and is a thin adapter over pipeline/Pipeline.ts.
+The new pipeline replaces the entire  pi/generate.ts body. The 51 KB monolithic file with its 99-attempt retry loop, 6 different commented-out system prompt versions, and hand-rolled board-id standardization has been deleted. The replacement is roughly 2 KB and is a thin adapter over pipeline/Pipeline.ts.
 
 ### What runs now
 
@@ -179,41 +182,46 @@ validateProject(project)           ? ValidationResult
 `
 
 ### Files Created
-- backend/pipeline/Pipeline.ts — orchestrator
+- backend/pipeline/Pipeline.ts   orchestrator
 - backend/pipeline/ComponentsStage.ts
 - backend/pipeline/ConnectionsStage.ts
 - backend/pipeline/FirmwareStage.ts
 - backend/pipeline/LibraryResolver.ts
-- backend/pipeline/index.ts — barrel
-- backend/allocator/PinAllocator.ts — full implementation
-- backend/allocator/index.ts — barrel
+- backend/pipeline/index.ts   barrel
+- backend/allocator/PinAllocator.ts   full implementation
+- backend/allocator/index.ts   barrel
 
 ### Files Modified
-- backend/api/generate.ts — deleted and rewritten as a thin ~70-line adapter
-- backend/prompts/firmware.prompt.ts — added userPrompt to FirmwarePromptInput
+- backend/api/generate.ts   deleted and rewritten as a thin ~70-line adapter
+- backend/prompts/firmware.prompt.ts   added userPrompt to FirmwarePromptInput
 
 ### Files Deleted
 - backend/api/generate.ts (old 53 KB version with 99-attempt retry loop, commented system prompts, hand-rolled board-id standardization, legacy Groq code, hand-rolled pin-catalog strings)
 
 ### Architecture Decisions
-- The new pi/generate.ts exposes the same public surface (generateVelxioProject, alidateProject, ValidationError, latestProject) so the HTTP layer doesn't change. Internal error types from alidators-core are mapped to the legacy shape for backward compatibility.
+- The new  pi/generate.ts exposes the same public surface (generateVelxioProject, 
+alidateProject, ValidationError, latestProject) so the HTTP layer doesn't change. Internal error types from 
+alidators-core are mapped to the legacy shape for backward compatibility.
 - LlmClient is a constructor argument for every stage. Production uses BedrockLlmClient; tests inject a fake.
-- Pipeline.repair() is the single allowed repair pass (Phase 6 — no while (attempts <= 99)). It re-asks the LLM with the structured errors, then validates again. If still invalid, the project is returned with alidation.valid === false and the consumer decides what to do.
-- LibraryResolver is a static rule list (Phase 7 — single source of truth for component ? library mapping). New components get a new regex line, nothing else.
+- Pipeline.repair() is the single allowed repair pass (Phase 6   no while (attempts <= 99)). It re-asks the LLM with the structured errors, then validates again. If still invalid, the project is returned with 
+alidation.valid === false and the consumer decides what to do.
+- LibraryResolver is a static rule list (Phase 7   single source of truth for component ? library mapping). New components get a new regex line, nothing else.
 - PinAllocator (Phase 8) is deterministic: it walks each component pin, classifies it as power/ground/i2c/spi/pwm/analog/digital, and picks the first free matching board pin. The LLM never picks GPIO directly. Protocol pins (I2C/SPI) are reserved first, so they cannot be stolen by later allocations.
 - Firmware prompt (Phase 9) now receives the structured plan + components + pinAllocation + connections + libraries + board context. No natural language is sent.
 
 ### Remaining Tasks
-- Phase 10: cleanup. The dead alidators.ts shim, dead legacy alidators-shim.ts re-exports, and old commented // ??$ blocks elsewhere should be removed.
+- Phase 10: cleanup. The dead 
+alidators.ts shim, dead legacy 
+alidators-shim.ts re-exports, and old commented // ??$ blocks elsewhere should be removed.
 - Phase 11: keep this doc up to date.
 
 ### Current Blockers
 - None. unx tsc --noEmit is clean across the whole backend.
 
 ### Notes For Next Session
-- Run cd E:\subbu\wokwi-youtube\llm\backend; bunx tsc --noEmit — should be silent.
+- Run cd E:\subbu\wokwi-youtube\llm\backend; bunx tsc --noEmit   should be silent.
 - Pipeline.run(prompt, onProgress) is the new entry point. It returns a PipelineResult with { project, plan, context, allocation, libraries, validation, stages }.
 - The Pipeline constructor takes overrides for every stage, so unit tests can fake any individual stage without touching the rest.
 - LlmClient is the only thing that talks to Bedrock. Every other stage takes it as a dependency.
 - LibraryResolver rules are regex-on-type in pipeline/LibraryResolver.ts. Add new entries there only.
-- PinAllocator allocates per board; the board pin spec table is in llocator/PinAllocator.ts. The LLM no longer picks any board pin — the allocator decides.
+- PinAllocator allocates per board; the board pin spec table is in  llocator/PinAllocator.ts. The LLM no longer picks any board pin   the allocator decides.
